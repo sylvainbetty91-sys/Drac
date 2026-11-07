@@ -13,7 +13,8 @@ export default {
     statut: 'Estado',
     enLigne: 'EN LÍNEA',
     uptime: 'Tiempo activo',
-    commandes: 'COMANDOS',
+    infoBot: 'INFO DEL BOT',
+    commandes: 'LISTA DE COMANDOS',
     changerLangue: 'Cambiar de idioma',
   },
   commandes: {
