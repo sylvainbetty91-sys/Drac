@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Connecter mon bot WhatsApp</title>
+<style>
+  :root {
+    --bg: #eef3f0;
+    --surface: #ffffff;
+    --ink: #10251f;
+    --muted: #5b6f68;
+    --line: #cddad4;
+    --accent: #0f7a5c;
+    --accent-ink: #ffffff;
+    --tile: #e3ede8;
+    --error: #b3261e;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0d1c18;
+      --surface: #13261f;
+      --ink: #e6f1ec;
+      --muted: #93aaa2;
+      --line: #264038;
+      --accent: #3ddc97;
+      --accent-ink: #072018;
+      --tile: #1b3329;
+      --error: #ff8a80;
+      color-scheme: dark;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  main {
+    width: 100%;
+    max-width: 420px;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 28px 24px;
+  }
+  h1 { font-size: 1.5rem; line-height: 1.2; margin: 0 0 8px; letter-spacing: -0.01em; }
+  p.lead { margin: 0 0 22px; color: var(--muted); line-height: 1.5; }
+  label { display: block; font-weight: 600; margin: 0 0 6px; }
+  input {
+    width: 100%;
+    font: inherit;
+    font-size: 1.1rem;
+    padding: 14px;
+    border-radius: 12px;
+    border: 1.5px solid var(--line);
+    background: transparent;
+    color: var(--ink);
+    margin-bottom: 14px;
+  }
+  input:focus-visible, button:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+  small { display: block; color: var(--muted); margin: -8px 0 16px; line-height: 1.4; }
+  button.primary {
+    width: 100%;
+    font: inherit;
+    font-weight: 700;
+    padding: 15px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--accent);
+    color: var(--accent-ink);
+    cursor: pointer;
+  }
+  button.primary:disabled { opacity: .6; cursor: wait; }
+  #error { color: var(--error); margin: 14px 0 0; min-height: 1.2em; line-height: 1.4; }
+  #result[hidden], #keyField[hidden] { display: none; }
+  .code {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0 18px;
+    cursor: pointer;
+  }
+  .code span {
+    width: 34px;
+    padding: 12px 0;
+    text-align: center;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: var(--tile);
+    border-radius: 10px;
+    font-variant-numeric: tabular-nums;
+  }
+  .code i { width: 10px; height: 3px; background: var(--muted); border-radius: 2px; }
+  ol { padding-left: 20px; margin: 0 0 14px; color: var(--muted); line-height: 1.6; }
+  .hint { color: var(--muted); font-size: .9rem; margin: 0; }
+  .ok { text-align: center; font-weight: 600; margin: 0 0 6px; }
+  @media (prefers-reduced-motion: no-preference) {
+    .code span { animation: pop .35s ease backwards; }
+    .code span:nth-of-type(n) { animation-delay: calc(var(--i) * 40ms); }
+    @keyframes pop { from { transform: translateY(8px); opacity: 0; } }
+  }
+</style>
+</head>
+<body>
+<main>
+  <div id="form">
+    <h1>Connecter mon bot WhatsApp</h1>
+    <p class="lead">Saisis ton numéro, tu reçois un code à entrer dans WhatsApp.</p>
+
+    <label for="number">Ton numéro</label>
+    <input id="number" type="tel" inputmode="numeric" autocomplete="tel" placeholder="33612345678">
+    <small>Avec l’indicatif du pays, sans +, sans espaces ni zéro initial.</small>
+
+    <div id="keyField" hidden>
+      <label for="key">Clé d’accès</label>
+      <input id="key" type="password" autocomplete="off">
+    </div>
+
+    <button class="primary" id="go">Obtenir mon code</button>
+    <p id="error" role="alert"></p>
+  </div>
+
+  <div id="result" hidden>
+    <p class="ok">Ton code de connexion</p>
+    <div class="code" id="code" title="Toucher pour copier"></div>
+    <ol>
+      <li>Ouvre WhatsApp, puis <b>Appareils connectés</b>.</li>
+      <li>Touche <b>Connecter un appareil</b>.</li>
+      <li>Choisis <b>Connecter avec le numéro de téléphone</b> et saisis le code.</li>
+    </ol>
+    <p class="hint">Le code expire au bout de quelques minutes. Une fois saisi, envoie <b>!ping</b> dans n’importe quelle discussion pour tester.</p>
+  </div>
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  fetch('/api/config').then(r => r.json()).then(c => { $('keyField').hidden = !c.keyRequired; });
+
+  $('go').addEventListener('click', async () => {
+    $('error').textContent = '';
+    $('go').disabled = true;
+    $('go').textContent = 'Génération du code…';
+    try {
+      const res = await fetch('/api/pair', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ number: $('number').value, key: $('key').value }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Erreur inconnue.');
+      showCode(data.code);
+    } catch (e) {
+      $('error').textContent = e.message;
+      $('go').disabled = false;
+      $('go').textContent = 'Obtenir mon code';
+    }
+  });
+
+  function showCode(code) {
+    const box = $('code');
+    box.innerHTML = '';
+    [...code].forEach((ch, i) => {
+      const s = document.createElement('span');
+      s.textContent = ch;
+      s.style.setProperty('--i', i);
+      box.appendChild(s);
+      if (i === 3) box.appendChild(document.createElement('i'));
+    });
+    box.onclick = () => navigator.clipboard?.writeText(code);
+    $('form').hidden = true;
+    $('result').hidden = false;
+  }
+</script>
+</body>
+</html>
