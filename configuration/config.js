@@ -14,7 +14,7 @@ export default {
     nom: '𝙳𝚁𝙰𝙲𝚄𝙻𝙰 𝙼𝙳',
     // Lien direct vers l'image (.jpg / .png). Le bot la charge depuis ce lien.
     // Laisse vide pour utiliser ta photo de profil WhatsApp.
-    ppUrl: '',
+    ppUrl: 'https://files.catbox.moe/gss8tm.jpeg',
   },
 
   // --- Chaîne WhatsApp (newsletter) ---
