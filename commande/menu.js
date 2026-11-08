@@ -1,4 +1,4 @@
-import { getLang, messageAccueil } from '../lib/langue.js';
+import { getLang, messageAccueil, textes } from '../lib/langue.js';
 import config from '../configuration/config.js';
 import { fuseauDe } from '../lib/fuseau.js';
 
@@ -54,6 +54,10 @@ async function photoDuBot() {
 // Écran de choix de la langue (même texte que le message de bienvenue)
 const choixLangue = messageAccueil;
 
+// Met les lettres en police monospace (𝙽𝙾𝙼, 𝙳𝙰𝚃𝙴...)
+const mono = (s) =>
+  s.toUpperCase().replace(/[A-Z]/g, (c) => String.fromCodePoint(0x1d670 + c.charCodeAt(0) - 65));
+
 export default {
   name: 'menu',
   choixLangue,
@@ -73,18 +77,19 @@ export default {
       .map((c) => `┃  ◦ ${prefix}${c.name}`)
       .join('\n');
 
+    const m = textes(lang).menu;
     const text =
 `╭━━━┈┈┈┈┈┈┈┈━━━╮
-┃       𝙸𝙽𝙵𝙾𝚂 𝙳𝚄 𝙱𝙾𝚃 ʕ˖͜͡˖ʔ
+┃       ${mono(m.infoBot)} ʕ˖͜͡˖ʔ
 ┃ ──────────────
-┃  ◦ 𝙽𝙾𝙼      ⟶ ${nom}
-┃  ◦ 𝙳𝙰𝚃𝙴      ⟶ ${date}
-┃  ◦ 𝚄𝙿𝚃𝙸𝙼𝙴    ⟶ ${uptime()}
-┃  ◦ 𝙷𝙴𝚄𝚁𝙴     ⟶ ${heure}
+┃  ◦ ${mono(m.nom)} ⟶ ${nom}
+┃  ◦ ${mono(m.date)} ⟶ ${date}
+┃  ◦ ${mono(m.uptime)} ⟶ ${uptime()}
+┃  ◦ ${mono(m.heure)} ⟶ ${heure}
 ╰━━━┈┈┈┈┈┈┈┈━━━╯
 
 ╭━━━┈┈┈┈┈┈┈┈━━━╮
-┃     𝙻𝙸𝚂𝚃𝙴 𝙳𝙴𝚂 𝙲𝙾𝙼𝙼𝙰𝙽𝙳𝙴𝚂 ʕ˖͜͡˖ʔ
+┃     ${mono(m.commandes)} ʕ˖͜͡˖ʔ
 ┃ ──────────────
 ${liste}
 ╰━━━┈┈┈┈┈┈┈┈━━━╯
