@@ -5,7 +5,9 @@ import { LANGUES, setLang, textes } from '../lib/langue.js';
 export async function appliquerLangue(ctx, choix) {
   setLang(ctx.number, choix);
   const reponse = await menu.run(ctx);
-  reponse.text = `${textes(choix).langueChangee}\n\n${reponse.text}`;
+  const info = textes(choix).langueChangee;
+  if (reponse.caption !== undefined) reponse.caption = `${info}\n\n${reponse.caption}`;
+  else reponse.text = `${info}\n\n${reponse.text}`;
   return reponse;
 }
 
